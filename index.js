@@ -3,9 +3,7 @@
 const chalk = require("chalk");
 var instapaper = require('instapaper');
 
-var feed = instapaper(CONSUMER_KEY, CONSUMER_SECRET);
-feed.setUserCredentials(USERNAME, PASSWORD);
+var key, secret, username, password;
 
-const greeting = chalk.white.bold("Hello!");
-
-console.log(greeting);
+var feed = instapaper(key, secret);
+feed.setUserCredentials(username, password);
