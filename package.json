@@ -1,0 +1,31 @@
+{
+  "name": "myreadinglist",
+  "version": "1.0.0",
+  "description": "A tool for generating reading list markdown docs from instapaper feeds.",
+  "main": "index.js",
+  "bin": {
+    "grabreadinglist": "index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robotpony/myreadinglist.git"
+  },
+  "keywords": [
+    "markdown",
+    "node",
+    "instapaper"
+  ],
+  "author": "Bruce Alderson",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/robotpony/myreadinglist/issues"
+  },
+  "homepage": "https://github.com/robotpony/myreadinglist#readme",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "instapaper": "^1.1.0"
+  }
+}
