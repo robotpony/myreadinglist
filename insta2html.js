@@ -32,7 +32,8 @@ var source = {
 	maxEntries: argv.max,
 	sinceDate: argv.since,
 	filter: null,
-	rowLen: 5
+	rowLen: 5,
+	locale: 'en-CA'
 }
 var totalLinks = 0
 var done = false
@@ -58,13 +59,11 @@ function isFiltered(value, filters) {
 	return found
 }
 
-
 try {
 
-	reader.eachLine(source.csvFile, function(line) {
+	reader.eachLine(source.csvFile, function(line, isLast) {
 		csv(
-			line,
-			{},
+			line, {},
 			function(err, row) {
 				if (row) {
 					row = row[0] // row object is nested
@@ -72,16 +71,16 @@ try {
 					if (done) return
 					if (!row || row.length != source.rowLen) return // skip invalid/incomplete rows
 
-					if (totalLinks >= source.maxEntries) {
+					if (isLast || totalLinks >= source.maxEntries) {
 						done = true
-						console.log()
-						var from = new Date(firstLinkDate * 1000)
-						var to = new Date(latestLinkDate * 1000)
-						var since = new Date(source.sinceDate * 1000)
 
-						console.log(`<!-- Links from: ${from} - ${to} (${source.maxEntries} total) -->`)
-						if (source.filter) console.log(`<!-- Filtered: ${source.filter} -->`)
-						if (source.sinceDate) console.log(`<!-- Filtered: ${since} -->`)
+						var from = new Date(firstLinkDate * 1000).toLocaleDateString(source.locale)
+						var to = new Date(latestLinkDate * 1000).toLocaleDateString(source.locale)
+
+						console.log()
+						console.log(`\t<!-- Links from: ${from} - ${to} (${totalLinks} total / ${source.maxEntries} max) -->`)
+						if (source.filter) console.log(`\t<!-- Filtered: ${source.filter} -->`)
+						if (source.sinceDate) console.log(`\t<!-- Since: ${source.sinceDate} -->`)
 						return
 					}
 
@@ -92,8 +91,8 @@ try {
 					var description = row[2]
 					var folder = row[3]
 					var date = row[4]
-					var niceDate = new Date(date * 1000).toLocaleDateString("en-CA")
-					var niceTime = new Date(date * 1000).toLocaleTimeString("en-CA")
+					var niceDate = new Date(date * 1000).toLocaleDateString(source.locale)
+					var niceTime = new Date(date * 1000).toLocaleTimeString(source.locale)
 
 					folder = folder.toLowerCase()
 
@@ -116,7 +115,7 @@ try {
 					if (!firstLinkDate) firstLinkDate = date
 				}
 			})
-	})
+		})
 } catch (e) {
 	// ignored
 	console.log(e)
