@@ -1,15 +1,26 @@
 #!/usr/bin/env node
 var argv = require('yargs/yargs')(process.argv.slice(2))
-	.usage('Usage: $0 command --file [name] --max [num] --since [unix time] --filter [category]')
-	.command('htmlize', 'Convert links to simple HTML')
-	.default('file', 'data/instapaper-export.csv')
-	.default('max', 150)
-	.default('since', 0)
-	.default('filter', 'unread')
-	.alias('f', 'file')
-	.alias('m', 'max')
-	.alias('F', 'filter')
-	.demandCommand(1)
+	.usage('Usage: $0 --file [name] --max [num] --since [unix time] --filter [category]')
+		.option('file', {
+			alias: 'f',
+			describe: 'Specify an import file',
+			default: 'data/instapaper-export.csv'
+  		})
+		.option('max', {
+			alias: 'm',
+			describe: 'Maximum number of lines',
+			default: 100
+		})
+		.option('since', {
+			alias: 's',
+			describe: 'Since time (UNIX)',
+			default: 0
+		})
+		.option('filter', {
+			alias: 'F',
+			describe: 'Filter out this folder (can be repeated)',
+			default: 'unread'
+		})
 	.argv;
 
 const reader = require('line-reader')
