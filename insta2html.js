@@ -19,9 +19,9 @@ var argv = require('yargs/yargs')(process.argv.slice(2))
 		.option('filter', {
 			alias: 'F',
 			describe: 'Filter out this folder (can be repeated)',
-			default: 'unread'
+			default: "unread"
 		})
-	.argv;
+	.argv
 
 const reader = require('line-reader')
 var csv = require('csv-parse')
@@ -34,10 +34,10 @@ var source = {
 	filter: null,
 	rowLen: 5
 }
-var totalLinks = 0;
+var totalLinks = 0
 var done = false
-var latestLinkDate;
-var firstLinkDate;
+var latestLinkDate
+var firstLinkDate
 
 // allow an array of filters
 if (argv.filter) {
@@ -48,6 +48,7 @@ if (argv.filter) {
 	}
 }
 
+// check if a value is in [filters]
 function isFiltered(value, filters) {
 	if (!filters) return false
 	let found = false
@@ -74,8 +75,13 @@ try {
 					if (totalLinks >= source.maxEntries) {
 						done = true
 						console.log()
-						console.log(`<!-- Links from: ${firstLinkDate} - ${latestLinkDate} (${source.maxEntries} total) -->`)
-						if (source.filter) console.log(`<!-- Filter: ${source.filter} -->`)
+						var from = new Date(firstLinkDate * 1000)
+						var to = new Date(latestLinkDate * 1000)
+						var since = new Date(source.sinceDate * 1000)
+
+						console.log(`<!-- Links from: ${from} - ${to} (${source.maxEntries} total) -->`)
+						if (source.filter) console.log(`<!-- Filtered: ${source.filter} -->`)
+						if (source.sinceDate) console.log(`<!-- Filtered: ${since} -->`)
 						return
 					}
 
@@ -86,6 +92,8 @@ try {
 					var description = row[2]
 					var folder = row[3]
 					var date = row[4]
+					var niceDate = new Date(date * 1000).toLocaleDateString("en-CA")
+					var niceTime = new Date(date * 1000).toLocaleTimeString("en-CA")
 
 					folder = folder.toLowerCase()
 
@@ -93,13 +101,14 @@ try {
 
 					if (url == 'URL') return // skip header line
 					if (isFiltered(folder, source.filter)) return // skip archived links
+					if ((source.sinceDate && date) < (source.sinceDate + 1)) return // skip older
 
 					// generate simple HTML output
 
 					totalLinks ++
 
-					if (description.length > 0) description = `\n\t<p>${description}</p> `
-					var output = `<li class="${folder}">\n\t<a href="${url}">${title}</a>${description}\n</li>`
+					if (description.length > 0) description = `\n\t\t<p>${description}</p> `
+					var output = `\t<li class="${folder}" id="${date}" data-date="${niceDate}">\n\t\t<a href="${url}">\n\t\t\t${title}\n\t\t</a>${description}\n\t</li>`
 
 					console.log(output) // dump to console to be pipe-able
 
@@ -113,9 +122,3 @@ try {
 	console.log(e)
 }
 
-
-
-// var instapaper = require('instapaper');
-// var key, secret, username, password;
-// var feed = instapaper(key, secret);
-// feed.setUserCredentials(username, password);
