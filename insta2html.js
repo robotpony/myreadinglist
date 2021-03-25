@@ -63,7 +63,8 @@ try {
 
 	reader.eachLine(source.csvFile, function(line, isLast /*, readMore */) {
 
-		let link = {
+		// Simple Link struct
+		link = {
 			url: '',
 			title: '',
 			description: '',
@@ -80,6 +81,8 @@ try {
 				this.id = id
 				this.date = date
 				this.time = time
+
+				// lack of error checking, input files
 			},
 
 			html: function() {
@@ -102,7 +105,7 @@ try {
 
 		csv(
 			line, {
-				comment: 'URL'
+				comment: 'URL' // skips comment lines starting with URL
 			},
 			function(err, row) {
 				if (err || !row) return
