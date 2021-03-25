@@ -59,48 +59,54 @@ function isFiltered(value, filters) {
 	return found
 }
 
+// Simple Link struct
+link = {
+	url: '',
+	title: '',
+	description: '',
+	folder: '',
+	id: '',
+	date: '',
+	time: '',
+	totalLinks: 0,
+
+	set: function(url, title, description, folder, id, date, time) {
+		this.url = url
+		this.title = title
+		this.description = description
+		this.folder = folder
+		this.id = id
+		this.date = date
+		this.time = time
+		this.totalLinks++
+		// lack of error checking, input files
+	},
+
+	html: function() {
+		let description = this.description.length > 0 ? `\n\t\t<p>${this.description}</p> ` : ''
+
+		return `\t<li class="${this.folder}" id="${this.id}" data-date="${this.date}">\n\t\t<a href="${this.url}">\n\t\t\t${this.title}\n\t\t</a>${description}\n\t</li>`
+	},
+
+	skip: function() {
+		this.totalLinks--
+	}
+}
+
 try {
 
 	reader.eachLine(source.csvFile, function(line, isLast /*, readMore */) {
 
-		// Simple Link struct
-		link = {
-			url: '',
-			title: '',
-			description: '',
-			folder: '',
-			id: '',
-			date: '',
-			time: '',
-
-			set: function(url, title, description, folder, id, date, time) {
-				this.url = url
-				this.title = title
-				this.description = description
-				this.folder = folder
-				this.id = id
-				this.date = date
-				this.time = time
-
-				// lack of error checking, input files
-			},
-
-			html: function() {
-				let description = this.description.length > 0 ? `\n\t\t<p>${this.description}</p> ` : ''
-
-				return `\t<li class="${this.folder}" id="${this.id}" data-date="${this.date}">\n\t\t<a href="${this.url}">\n\t\t\t${this.title}\n\t\t</a>${description}\n\t</li>`
-			}
-		}
-
-		if (isLast || totalLinks >= source.maxEntries) {
+		if (isLast || link.totalLinks >= source.maxEntries) {
 			var from = new Date(firstLink * 1000).toLocaleDateString(source.locale)
 			var to = new Date(lastestLink * 1000).toLocaleDateString(source.locale)
 
 			console.log()
-			console.log(`\t<!-- Links from: ${from} - ${to} (${source.maxEntries} total) -->`)
+			console.log(`\t<!-- Links from: ${from} - ${to} (${link.totalLinks} matched / ${source.maxEntries} max) -->`)
 			if (source.filter) console.log(`\t<!-- Filtered: ${source.filter} -->`)
 			if (source.sinceDate) console.log(`\t<!-- Starting: ${source.sinceDate} -->`)
-			return false
+
+			return false // done reading
 		}
 
 		csv(
@@ -111,7 +117,6 @@ try {
 				if (err || !row) return
 
 				row = row[0] // row object is nested
-
 				if (!row || row.length != source.rowLen) return // skip invalid/incomplete rows
 
 				link.set(
@@ -122,12 +127,11 @@ try {
 
 				// filter
 
-				if (isFiltered(link.folder, source.filter)) return // skip archived links
-				if ((source.sinceDate && link.date) < (source.sinceDate + 1)) return // skip older
+				if (isFiltered(link.folder, source.filter)) return link.skip()
+				if (source.sinceDate && (link.id < (source.sinceDate + 1))) return link.skip()
 
 				// generate simple HTML output
 
-				totalLinks ++
 				console.log(link.html()) // dump to console to be pipe-able
 
 				lastestLink = link.id
