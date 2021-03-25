@@ -37,8 +37,8 @@ var source = {
 }
 var totalLinks = 0
 var done = false
-var latestLinkDate
-var firstLinkDate
+var lastestLink
+var firstLink
 
 // allow an array of filters
 if (argv.filter) {
@@ -61,59 +61,74 @@ function isFiltered(value, filters) {
 
 try {
 
-	reader.eachLine(source.csvFile, function(line, isLast) {
+	reader.eachLine(source.csvFile, function(line, isLast /*, readMore */) {
+
+		let link = {
+			url: '',
+			title: '',
+			description: '',
+			folder: '',
+			id: '',
+			date: '',
+			time: '',
+
+			set: function(url, title, description, folder, id, date, time) {
+				this.url = url
+				this.title = title
+				this.description = description
+				this.folder = folder
+				this.id = id
+				this.date = date
+				this.time = time
+			},
+
+			html: function() {
+				let description = this.description.length > 0 ? `\n\t\t<p>${this.description}</p> ` : ''
+
+				return `\t<li class="${this.folder}" id="${this.id}" data-date="${this.date}">\n\t\t<a href="${this.url}">\n\t\t\t${this.title}\n\t\t</a>${description}\n\t</li>`
+			}
+		}
+
+		if (isLast || totalLinks >= source.maxEntries) {
+			var from = new Date(firstLink * 1000).toLocaleDateString(source.locale)
+			var to = new Date(lastestLink * 1000).toLocaleDateString(source.locale)
+
+			console.log()
+			console.log(`\t<!-- Links from: ${from} - ${to} (${source.maxEntries} total) -->`)
+			if (source.filter) console.log(`\t<!-- Filtered: ${source.filter} -->`)
+			if (source.sinceDate) console.log(`\t<!-- Starting: ${source.sinceDate} -->`)
+			return false
+		}
+
 		csv(
-			line, {},
+			line, {
+				comment: 'URL'
+			},
 			function(err, row) {
-				if (row) {
-					row = row[0] // row object is nested
+				if (err || !row) return
 
-					if (done) return
-					if (!row || row.length != source.rowLen) return // skip invalid/incomplete rows
+				row = row[0] // row object is nested
 
-					if (isLast || totalLinks >= source.maxEntries) {
-						done = true
+				if (!row || row.length != source.rowLen) return // skip invalid/incomplete rows
 
-						var from = new Date(firstLinkDate * 1000).toLocaleDateString(source.locale)
-						var to = new Date(latestLinkDate * 1000).toLocaleDateString(source.locale)
+				link.set(
+					row[0], row[1], row[2], row[3].toLowerCase(), row[4],
+					new Date(row[4] * 1000).toLocaleDateString(source.locale),
+					new Date(row[4] * 1000).toLocaleTimeString(source.locale)
+				)
 
-						console.log()
-						console.log(`\t<!-- Links from: ${from} - ${to} (${totalLinks} total / ${source.maxEntries} max) -->`)
-						if (source.filter) console.log(`\t<!-- Filtered: ${source.filter} -->`)
-						if (source.sinceDate) console.log(`\t<!-- Since: ${source.sinceDate} -->`)
-						return
-					}
+				// filter
 
-					// grab link elements from row
+				if (isFiltered(link.folder, source.filter)) return // skip archived links
+				if ((source.sinceDate && link.date) < (source.sinceDate + 1)) return // skip older
 
-					var url = row[0]
-					var title = row[1]
-					var description = row[2]
-					var folder = row[3]
-					var date = row[4]
-					var niceDate = new Date(date * 1000).toLocaleDateString(source.locale)
-					var niceTime = new Date(date * 1000).toLocaleTimeString(source.locale)
+				// generate simple HTML output
 
-					folder = folder.toLowerCase()
+				totalLinks ++
+				console.log(link.html()) // dump to console to be pipe-able
 
-					// filter
-
-					if (url == 'URL') return // skip header line
-					if (isFiltered(folder, source.filter)) return // skip archived links
-					if ((source.sinceDate && date) < (source.sinceDate + 1)) return // skip older
-
-					// generate simple HTML output
-
-					totalLinks ++
-
-					if (description.length > 0) description = `\n\t\t<p>${description}</p> `
-					var output = `\t<li class="${folder}" id="${date}" data-date="${niceDate}">\n\t\t<a href="${url}">\n\t\t\t${title}\n\t\t</a>${description}\n\t</li>`
-
-					console.log(output) // dump to console to be pipe-able
-
-					latestLinkDate = date
-					if (!firstLinkDate) firstLinkDate = date
-				}
+				lastestLink = link.id
+				if (!firstLink) firstLink = link.id
 			})
 		})
 } catch (e) {
