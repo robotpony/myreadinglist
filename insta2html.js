@@ -40,7 +40,7 @@ var done = false
 var lastestLink
 var firstLink
 
-// allow an array of filters
+// allow an array of filters (e.g., -F "1" -F "2") by treating
 if (argv.filter) {
 	if (!Array.isArray(argv.filter)) {
 		source.filter = [argv.filter]
@@ -94,8 +94,9 @@ link = {
 }
 
 try {
+	console.log()
 
-	reader.eachLine(source.csvFile, function(line, isLast /*, readMore */) {
+	reader.eachLine(source.csvFile, function(line, isLast) {
 
 		if (isLast || link.totalLinks >= source.maxEntries) {
 			var from = new Date(firstLink * 1000).toLocaleDateString(source.locale)
