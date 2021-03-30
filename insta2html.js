@@ -27,10 +27,10 @@ var argv = require('yargs/yargs')(process.argv.slice(2))
 			describe: 'Clean up titles and URLs',
 			default: false
 		})
-	.argv
+	.argv;
 
-const reader = require('line-reader')
-var csv = require('csv-parse')
+const reader = require('line-reader');
+var csv = require('csv-parse');
 
 // the reading list source
 var source = {
@@ -43,28 +43,28 @@ var source = {
 	rowLen: 5,
 	locale: 'en-CA'
 }
-var totalLinks = 0
-var done = false
-var lastestLink
-var firstLink
+var totalLinks = 0;
+var done = false;
+var lastestLink;
+var firstLink;
 
 // allow an array of filters (e.g., -F "1" -F "2") by treating
 if (argv.filter) {
 	if (!Array.isArray(argv.filter)) {
-		source.filter = [argv.filter]
+		source.filter = [argv.filter];
 	} else {
-		source.filter = argv.filter
+		source.filter = argv.filter;
 	}
 }
 
 // check if a value is in [filters]
 function isFiltered(value, filters) {
-	if (!filters) return false
-	let found = false
+	if (!filters) return false;
+	let found = false;
 	filters.every(function(v) {
-		found = (v.toLowerCase() == value.toLowerCase())
+		found = (v.toLowerCase() == value.toLowerCase());
 	})
-	return found
+	return found;
 }
 
 // Simple Link struct
@@ -79,49 +79,49 @@ link = {
 	totalLinks: 0,
 
 	set: function(url, title, description, folder, id, date, time) {
-		this.url = url
-		this.title = title
-		this.description = description
-		this.folder = folder
-		this.id = id
-		this.date = date
-		this.time = time
-		this.totalLinks++
+		this.url = url;
+		this.title = title;
+		this.description = description;
+		this.folder = folder;
+		this.id = id;
+		this.date = date;
+		this.time = time;
+		this.totalLinks++;
 		// lack of error checking, input files
 	},
 
 	html: function() {
-		let description = this.description.length > 0 ? `\n<p>${this.description}</p>` : ''
-		let niceTitle = this.title
-		let url = this.url
+		let description = this.description.length > 0 ? `\n<p>${this.description}</p>` : '';
+		let niceTitle = this.title;
+		let url = this.url;
 
 		if (argv.cleanup) {
-			niceTitle = niceTitle.replace(source.cleanupTitlePattern, '')
-			url = url.replace(source.cleanupURLPattern, '')
+			niceTitle = niceTitle.replace(source.cleanupTitlePattern, '');
+			url = url.replace(source.cleanupURLPattern, '');
 		}
 
-		return `<li class="${this.folder}" id="${this.id}" data-date="${this.date}"><a href="${url}">${niceTitle}</a>${description}</li>`
+		return `<li class="${this.folder}" id="${this.id}" data-date="${this.date}"><a href="${url}">${niceTitle}</a>${description}</li>`;
 	},
 
 	skip: function() {
-		this.totalLinks--
+		this.totalLinks--;
 	}
 }
 
 try {
-	console.log()
+	console.log();
 
 	reader.eachLine(source.csvFile, function(line, isLast) {
 
 		if (isLast || link.totalLinks >= source.maxEntries) {
-			var from = new Date(firstLink * 1000).toLocaleDateString(source.locale)
-			var to = new Date(lastestLink * 1000).toLocaleDateString(source.locale)
+			var from = new Date(firstLink * 1000).toLocaleDateString(source.locale);
+			var to = new Date(lastestLink * 1000).toLocaleDateString(source.locale);
 
-			console.log()
-			console.log(`\t<!-- Links from: ${from} - ${to} (${link.totalLinks} matched / ${source.maxEntries} max) -->`)
-			if (source.sinceDate) console.log(`\t<!-- Starting  : ${source.sinceDate} -->`)
-			if (source.filter)    console.log(`\t<!-- Filter out: ${source.filter} -->`)
-			if (argv.cleanup)     console.log(`\t<!-- Cleanup   : titles, URLs -->`)
+			console.log();
+			console.log(`\t<!-- Links from: ${from} - ${to} (${link.totalLinks} matched / ${source.maxEntries} max) -->`);
+			if (source.sinceDate) console.log(`\t<!-- Starting  : ${source.sinceDate} -->`);
+			if (source.filter)    console.log(`\t<!-- Filter out: ${source.filter} -->`);
+			if (argv.cleanup)     console.log(`\t<!-- Cleanup   : titles, URLs -->`);
 
 			return false // done reading
 		}
@@ -131,32 +131,32 @@ try {
 				comment: 'URL' // skips comment lines starting with URL
 			},
 			function(err, row) {
-				if (err || !row) return
+				if (err || !row) return;
 
 				row = row[0] // row object is nested
-				if (!row || row.length != source.rowLen) return // skip invalid/incomplete rows
+				if (!row || row.length != source.rowLen) return; // skip invalid/incomplete rows
 
 				link.set(
 					row[0], row[1], row[2], row[3].toLowerCase(), row[4],
 					new Date(row[4] * 1000).toLocaleDateString(source.locale),
 					new Date(row[4] * 1000).toLocaleTimeString(source.locale)
-				)
+				);
 
 				// filter
 
-				if (isFiltered(link.folder, source.filter)) return link.skip()
-				if (source.sinceDate && (link.id < (source.sinceDate + 1))) return link.skip()
+				if (isFiltered(link.folder, source.filter)) return link.skip();
+				if (source.sinceDate && (link.id < (source.sinceDate + 1))) return link.skip();
 
 				// generate simple HTML output
 
-				console.log(link.html()) // dump to console to be pipe-able
+				console.log(link.html()); // dump to console to be pipe-able
 
-				lastestLink = link.id
-				if (!firstLink) firstLink = link.id
+				lastestLink = link.id;
+				if (!firstLink) firstLink = link.id;
 			})
 		})
 } catch (e) {
 	// ignored
-	console.log(e)
+	console.log(e);
 }
 
