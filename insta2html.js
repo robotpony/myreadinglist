@@ -91,7 +91,7 @@ link = {
 	},
 
 	html: function() {
-		let description = this.description.length > 0 ? `\n\t\t<p>${this.description}</p> ` : ''
+		let description = this.description.length > 0 ? `\n<p>${this.description}</p>` : ''
 		let niceTitle = this.title
 		let url = this.url
 
@@ -100,7 +100,7 @@ link = {
 			url = url.replace(source.cleanupURLPattern, '')
 		}
 
-		return `\t<li class="${this.folder}" id="${this.id}" data-date="${this.date}">\n\t\t<a href="${url}">\n\t\t\t${niceTitle}\n\t\t</a>${description}\n\t</li>`
+		return `<li class="${this.folder}" id="${this.id}" data-date="${this.date}"><a href="${url}">${niceTitle}</a>${description}</li>`
 	},
 
 	skip: function() {
