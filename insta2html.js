@@ -21,6 +21,12 @@ var argv = require('yargs/yargs')(process.argv.slice(2))
 			describe: 'Filter out this folder (can be repeated)',
 			default: "unread"
 		})
+		.option('cleanup', {
+			alias: 'C',
+			boolean: true,
+			describe: 'Clean up titles and URLs',
+			default: false
+		})
 	.argv
 
 const reader = require('line-reader')
@@ -32,6 +38,8 @@ var source = {
 	maxEntries: argv.max,
 	sinceDate: argv.since,
 	filter: null,
+	cleanupTitlePattern: /\s+\|\s+.*?$/,
+	cleanupURLPattern: /\?.*?$/,
 	rowLen: 5,
 	locale: 'en-CA'
 }
@@ -84,8 +92,15 @@ link = {
 
 	html: function() {
 		let description = this.description.length > 0 ? `\n\t\t<p>${this.description}</p> ` : ''
+		let niceTitle = this.title
+		let url = this.url
 
-		return `\t<li class="${this.folder}" id="${this.id}" data-date="${this.date}">\n\t\t<a href="${this.url}">\n\t\t\t${this.title}\n\t\t</a>${description}\n\t</li>`
+		if (argv.cleanup) {
+			niceTitle = niceTitle.replace(source.cleanupTitlePattern, '')
+			url = url.replace(source.cleanupURLPattern, '')
+		}
+
+		return `\t<li class="${this.folder}" id="${this.id}" data-date="${this.date}">\n\t\t<a href="${url}">\n\t\t\t${niceTitle}\n\t\t</a>${description}\n\t</li>`
 	},
 
 	skip: function() {
@@ -104,8 +119,9 @@ try {
 
 			console.log()
 			console.log(`\t<!-- Links from: ${from} - ${to} (${link.totalLinks} matched / ${source.maxEntries} max) -->`)
-			if (source.filter) console.log(`\t<!-- Filtered: ${source.filter} -->`)
-			if (source.sinceDate) console.log(`\t<!-- Starting: ${source.sinceDate} -->`)
+			if (source.sinceDate) console.log(`\t<!-- Starting  : ${source.sinceDate} -->`)
+			if (source.filter)    console.log(`\t<!-- Filter out: ${source.filter} -->`)
+			if (argv.cleanup)     console.log(`\t<!-- Cleanup   : titles, URLs -->`)
 
 			return false // done reading
 		}
